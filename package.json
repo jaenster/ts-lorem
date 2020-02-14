@@ -12,13 +12,13 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jaenster/lorem.git"
+    "url": "git+https://github.com/jaenster/ts-lorem.git"
   },
   "files": [
     "/bin",
     "/src"
   ],
-  "dependencies": {
+  "devDependency": {
     "@types/node": "^13.7.1",
     "reflect-metadata": "^0.1.13",
     "ts-node": "^8.6.2",
