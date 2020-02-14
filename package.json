@@ -1,8 +1,9 @@
 {
-  "name": "lorem",
-  "version": "1.0.0",
+  "name": "ts-lorem",
+  "version": "0.0.1",
   "description": "",
-  "main": "bin/lorem.js",
+  "main": "bin/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,6 +14,10 @@
     "type": "git",
     "url": "git+https://github.com/jaenster/lorem.git"
   },
+  "files": [
+    "/bin",
+    "/src"
+  ],
   "dependencies": {
     "@types/node": "^13.7.1",
     "reflect-metadata": "^0.1.13",

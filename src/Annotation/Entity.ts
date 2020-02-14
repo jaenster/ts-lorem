@@ -1,5 +1,5 @@
-import EntityManager from "../Managers/EntityManager";
-import {Class} from "../Types/Class";
+import {EntityManager} from "..";
+import {Class} from "..";
 import {Repository} from "../Managers/Repository";
 
 export type EntityOptions = {
@@ -12,7 +12,7 @@ const defasultSettings: EntityOptions = {
     tabel: null,
 };
 
-export default function Entity(settings: EntityOptions = {}) {
+export function Entity(settings: EntityOptions = {}) {
     const config = Object.assign({}, defasultSettings, settings);
     /**
      * @param constructor

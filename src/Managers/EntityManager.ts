@@ -1,12 +1,11 @@
 import {Repository} from "./Repository";
-import {EntityOptions} from "../Annotation/Entity";
-import {Class} from "../Types/Class";
+import {EntityOptions} from "..";
 import {Table} from "../Model/Table";
 
 export type EntityType = { new(...args: any[]): { [EntityFieldSymbol]?: Repository<any> } };
 
 export const EntityFieldSymbol = Symbol('EntityManager');
-export default class EntityManager<T> {
+export class EntityManager<T> {
     static classes: EntityType[] = [];
 
     static register(constructor: EntityType, settings: EntityOptions) {

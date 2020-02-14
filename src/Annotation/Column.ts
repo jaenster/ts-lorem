@@ -1,8 +1,8 @@
 import {Validator} from "./Validator";
 import "reflect-metadata";
-import {EntityType} from "../Managers/EntityManager";
-import {Class} from "../Types/Class";
-import {Column} from "../Model/Column";
+import {EntityType} from "..";
+import {Class} from "..";
+import {Column as ColumnModel} from "../Model/Column";
 
 type propertyKey = string;
 
@@ -16,7 +16,7 @@ export interface ColumnSettings {
 export const ColumnsSymbol = Symbol('Columns');
 const defaultSettings: ColumnSettings = {};
 
-export default function (settings: ColumnSettings = {}) {
+export function Column (settings: ColumnSettings = {}) {
     const config = Object.assign({}, defaultSettings, settings);
     return (target: any, propertyKey: string) => {
         config.name = propertyKey;
@@ -26,6 +26,6 @@ export default function (settings: ColumnSettings = {}) {
 
         if (!constructor[ColumnsSymbol]) constructor[ColumnsSymbol] = [];
 
-        constructor[ColumnsSymbol].push(new Column({...config, model: target}));
+        constructor[ColumnsSymbol].push(new ColumnModel({...config, model: target}));
     }
 }

@@ -1,6 +1,6 @@
 import {Validator} from "../Annotation/Validator";
 import {ColumnSettings} from "../Annotation/Column";
-import EntityManager, {EntityFieldSymbol} from "../Managers/EntityManager";
+import {EntityFieldSymbol} from "../Managers/EntityManager";
 import {Repository} from "../Managers/Repository";
 import {Class} from "../Types/Class";
 

@@ -1,9 +1,7 @@
-import EntityManager, {EntityFieldSymbol, EntityType} from "./EntityManager";
-import {ColumnsSymbol} from "../Annotation/Column";
+import {EntityFieldSymbol, EntityManager, EntityType} from "./EntityManager";
+import {ColumnsSymbol} from "..";
 import {Column} from "../Model/Column";
 import {Table} from "../Model/Table";
-import Collection from "../Model/Collection";
-import {Class} from "../Types/Class";
 
 export const isNew = Symbol('isNew');
 export const dirty = Symbol('dirty');
