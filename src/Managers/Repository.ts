@@ -1,17 +1,21 @@
-import EntityManager, {EntityType} from "./EntityManager";
+import EntityManager, {EntityFieldSymbol, EntityType} from "./EntityManager";
 import {ColumnsSymbol} from "../Annotation/Column";
 import {Column} from "../Model/Column";
+import {Table} from "../Model/Table";
+import Collection from "../Model/Collection";
+import {Class} from "../Types/Class";
 
 export const isNew = Symbol('isNew');
 export const dirty = Symbol('dirty');
 
-export class repository<T> {
+export class Repository<T> {
     private columns: Column[] = [];
     protected persistant: T[] = [];
     public model: EntityType;
-    private readonly idColumn : Column;
+    private readonly idColumn: Column;
     private cache: { model: T, lastUsed: number }[] = [];
     private interval;
+    public table: Table;
 
     constructor(constructor: EntityType) {
         this.model = constructor;
@@ -36,9 +40,28 @@ export class repository<T> {
         instance[isNew] = false;
         instance[dirty] = {};
         model["toJSON"] = () => {
-            return this.columns.reduce((acc,c) => acc[c.name] = model[c.name] && false || acc,{})
+            return this.columns.reduce((acc, c) => acc[c.name] = model[c.name] && false || acc, {})
         };
         return instance;
+    }
+
+    async findByModel(modelT: object): Promise<T[]> {
+
+        const collection: T[] = [];
+
+        await Promise.all(this.table.connections
+            .filter(({model}) => model === modelT) // Filter, only relations to M
+            .map(async ({ column}) => {
+                const instancesOfColumn = await this.findByColumn(column);
+                collection.push(...instancesOfColumn);
+            }));
+
+        return collection;
+    }
+
+    findByColumn(column: Column) : T[] {
+        //ToDo; generate query.
+        return [];
     }
 
     persist(model: T) {
@@ -48,7 +71,7 @@ export class repository<T> {
             model[dirty] = {};
             model[isNew] = true;
             model["toJSON"] = () => {
-                return this.columns.reduce((acc,c) => (acc[c.name] = model[c.name]) && false || acc,{})
+                return this.columns.reduce((acc, c) => (acc[c.name] = model[c.name]) && false || acc, {})
             };
             this.writeColumnProxies(model);
         }
@@ -72,7 +95,7 @@ export class repository<T> {
             let value = model[column.name];
             Object.defineProperty(model, column.name, {
                 get(): any {
-                    if (typeof column.type === 'function' && column.type && ![String,Number,Boolean,Function,Array].includes(column.type)) {
+                    if (typeof column.type === 'function' && column.type && ![String, Number, Boolean, Function, Array].includes(column.type)) {
                         if (!(value instanceof column.type)) {
                             const entity = EntityManager.getRepository(column.type);
                             value = entity.find(value);
@@ -85,7 +108,7 @@ export class repository<T> {
                 set(v: any): boolean {
                     if (!column.validation || column.validation.validate(v)) {
                         if (typeof column.type === 'object' && column.type) {
-                            if (v !instanceof column.type) {
+                            if (v ! instanceof column.type) {
                                 throw new TypeError('Wrong type of value.')
                             }
                         }
@@ -102,10 +125,10 @@ export class repository<T> {
 
     private cacheHandler() {
         const currentTime = (new Date).getTime();
-        for (let i = this.cache.length-1; i >= 0; i--) if (this.cache[i]) {
+        for (let i = this.cache.length - 1; i >= 0; i--) if (this.cache[i]) {
             const time = this.cache[i].lastUsed;
             if (currentTime - time > 1 * 1000 * 3) { // If didnt use for 3 minutes, clean up
-                this.cache.splice(i,1);
+                this.cache.splice(i, 1);
             }
         }
     }

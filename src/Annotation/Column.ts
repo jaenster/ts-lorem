@@ -5,9 +5,11 @@ import {Class} from "../Types/Class";
 import {Column} from "../Model/Column";
 
 type propertyKey = string;
+
 export interface ColumnSettings {
     validation?: Validator,
     reference?: propertyKey,
+
     [data: string]: any | any[];
 }
 
@@ -24,6 +26,6 @@ export default function (settings: ColumnSettings = {}) {
 
         if (!constructor[ColumnsSymbol]) constructor[ColumnsSymbol] = [];
 
-        constructor[ColumnsSymbol].push(new Column(config));
+        constructor[ColumnsSymbol].push(new Column({...config, model: target}));
     }
 }

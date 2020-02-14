@@ -18,12 +18,11 @@
       "esnext"
     ],
     "inlineSourceMap": true,
-    "outDir": "./dist",
+    "outDir": "./bin",
     "baseUrl": "."
   },
   "include": [
-    "**/*",
-    "ormconfig.ts"
+    "src/*"
   ],
   "exclude": [
     "node_modules",
