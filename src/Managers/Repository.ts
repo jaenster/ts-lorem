@@ -9,7 +9,7 @@ export const DBDriver = Symbol('db');
 
 export class Repository<T> {
     private columns: Column[] = [];
-    protected persistant: T[] = [];
+    protected persistent: T[] = [];
     public model: (new(...args) => T);
     private readonly idColumn: Column;
     private cache: { model: T, lastUsed: number }[] = [];
@@ -37,19 +37,18 @@ export class Repository<T> {
 
         const driver: DBDrivable = this[DBDriver][0];
         try {
-            const partial = await driver.find<T>(id);
-
-            // @ts-ignore
+            const partial = await driver.find<T>(this, id);
             const instance: T = new model;
             instance[isNew] = false;
             instance[dirty] = {};
             this.setupJSON(model);
 
             // setup inner fields
-            Object.assign(instance,partial);
+            Object.assign(instance, partial);
+
             return instance;
-            
-        } catch(e) {
+
+        } catch (e) {
             throw new Error('Failed to fetch model');
         }
 
@@ -59,10 +58,10 @@ export class Repository<T> {
         model["toJSON"] = () => {
             return this.columns.reduce((acc, c) => {
                 if (c.type && c.type.hasOwnProperty(EntityFieldSymbol)) {
-                    const type = c.type;
-                    // Get repo of other
-                    const repo: Repository<typeof type> = c.type[EntityFieldSymbol] as Repository<typeof type>
-                    const idField = repo.columns.filter(column => column.id)[0]; // get name of id field
+
+                    const repo: Repository<typeof c.type> = c.type[EntityFieldSymbol] as Repository<typeof c.type>,
+                        idField = repo.columns.filter(column => column.id)[0]; // get name of id field
+
                     if (idField) {
                         acc[c.name] = model[c.name][idField.name]; // use name of id field
                         return acc;
@@ -94,8 +93,8 @@ export class Repository<T> {
     }
 
     persist(model: T) {
-        if (!this.persistant.includes(model)) {
-            this.persistant.push(model);
+        if (!this.persistent.includes(model)) {
+            this.persistent.push(model);
 
             model[dirty] = {};
             model[isNew] = true;

@@ -7,7 +7,7 @@ export declare const dirty: unique symbol;
 export declare const DBDriver: unique symbol;
 export declare class Repository<T> {
     private columns;
-    protected persistant: T[];
+    protected persistent: T[];
     model: (new (...args: any[]) => T);
     private readonly idColumn;
     private cache;
@@ -20,7 +20,7 @@ export declare class Repository<T> {
     findByModel(modelT: object): Promise<T[]>;
     findByColumn(column: Column): T[];
     persist(model: T): void;
-    flush(): any;
+    flush(): Promise<void[]>;
     private writeColumnProxies;
     private cacheHandler;
 }
