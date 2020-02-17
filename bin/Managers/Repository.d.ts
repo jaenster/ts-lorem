@@ -8,14 +8,15 @@ export declare const DBDriver: unique symbol;
 export declare class Repository<T> {
     private columns;
     protected persistant: T[];
-    model: EntityType;
+    model: (new (...args: any[]) => T);
     private readonly idColumn;
     private cache;
     private interval;
     table: Table;
     [DBDriver]: DBDrivable[];
     constructor(constructor: EntityType);
-    find(id: any): T;
+    find(id: any): Promise<T>;
+    private setupJSON;
     findByModel(modelT: object): Promise<T[]>;
     findByColumn(column: Column): T[];
     persist(model: T): void;

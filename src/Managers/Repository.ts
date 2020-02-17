@@ -10,7 +10,7 @@ export const DBDriver = Symbol('db');
 export class Repository<T> {
     private columns: Column[] = [];
     protected persistant: T[] = [];
-    public model: EntityType;
+    public model: (new(...args) => T);
     private readonly idColumn: Column;
     private cache: { model: T, lastUsed: number }[] = [];
     private interval;
@@ -18,6 +18,7 @@ export class Repository<T> {
     public [DBDriver]: DBDrivable[] = [];
 
     constructor(constructor: EntityType) {
+        //@ts-ignore <-- Its a constructor that results in T
         this.model = constructor;
         this.columns = constructor[ColumnsSymbol];
         this.idColumn = this.columns.find(el => el.id);
@@ -25,7 +26,7 @@ export class Repository<T> {
         this.interval = setInterval(this.cacheHandler.bind(this), 3 * 1000);
     }
 
-    find(id): T {
+    async find(id): Promise<T> {
         const model = this.model;
 
         const cached = this.idColumn && this.cache.find(el => el.model[this.idColumn.name] === id);
@@ -34,15 +35,43 @@ export class Repository<T> {
             return cached.model;
         }
 
-        // @ts-ignore
-        const instance: T = new model;
+        const driver: DBDrivable = this[DBDriver][0];
+        try {
+            const partial = await driver.find<T>(id);
 
-        instance[isNew] = false;
-        instance[dirty] = {};
+            // @ts-ignore
+            const instance: T = new model;
+            instance[isNew] = false;
+            instance[dirty] = {};
+            this.setupJSON(model);
+
+            // setup inner fields
+            Object.assign(instance,partial);
+            return instance;
+            
+        } catch(e) {
+            throw new Error('Failed to fetch model');
+        }
+
+    }
+
+    private setupJSON(model) {
         model["toJSON"] = () => {
-            return this.columns.reduce((acc, c) => acc[c.name] = model[c.name] && false || acc, {})
+            return this.columns.reduce((acc, c) => {
+                if (c.type && c.type.hasOwnProperty(EntityFieldSymbol)) {
+                    const type = c.type;
+                    // Get repo of other
+                    const repo: Repository<typeof type> = c.type[EntityFieldSymbol] as Repository<typeof type>
+                    const idField = repo.columns.filter(column => column.id)[0]; // get name of id field
+                    if (idField) {
+                        acc[c.name] = model[c.name][idField.name]; // use name of id field
+                        return acc;
+                    }
+                }
+                acc[c.name] = model[c.name];
+                return acc;
+            }, {})
         };
-        return instance;
     }
 
     async findByModel(modelT: object): Promise<T[]> {
@@ -51,7 +80,7 @@ export class Repository<T> {
 
         await Promise.all(this.table.connections
             .filter(({model}) => model === modelT) // Filter, only relations to M
-            .map(async ({ column}) => {
+            .map(async ({column}) => {
                 const instancesOfColumn = await this.findByColumn(column);
                 collection.push(...instancesOfColumn);
             }));
@@ -59,7 +88,7 @@ export class Repository<T> {
         return collection;
     }
 
-    findByColumn(column: Column) : T[] {
+    findByColumn(column: Column): T[] {
         //ToDo; generate query.
         return [];
     }
@@ -70,9 +99,7 @@ export class Repository<T> {
 
             model[dirty] = {};
             model[isNew] = true;
-            model["toJSON"] = () => {
-                return this.columns.reduce((acc, c) => (acc[c.name] = model[c.name]) && false || acc, {})
-            };
+            this.setupJSON(model);
             this.writeColumnProxies(model);
         }
     }
@@ -99,9 +126,10 @@ export class Repository<T> {
             let value = model[column.name];
             Object.defineProperty(model, column.name, {
                 get(): any {
-                    if (typeof column.type === 'function' && column.type && ![String, Number, Boolean, Function, Array].includes(column.type)) {
-                        if (!(value instanceof column.type)) {
-                            const entity = EntityManager.getRepository(column.type);
+                    const constructor = column.model.constructor as (new (...args: any[]) => T);
+                    if (typeof constructor === 'function' && column.type && ![String, Number, Boolean, Function, Array].includes(column.type)) {
+                        if (!(value instanceof constructor)) {
+                            const entity = EntityManager.getRepository(constructor);
                             value = entity.find(value);
                             return value;
                         }
@@ -111,8 +139,8 @@ export class Repository<T> {
                 },
                 set(v: any): boolean {
                     if (!column.validation || column.validation.validate(v)) {
-                        if (typeof column.type === 'object' && column.type) {
-                            if (v ! instanceof column.type) {
+                        if (typeof column.model === 'function' && column.model) {
+                            if (v ! instanceof column.model) {
                                 throw new TypeError('Wrong type of value.')
                             }
                         }
