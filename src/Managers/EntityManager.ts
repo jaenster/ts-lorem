@@ -1,10 +1,12 @@
-import {Repository} from "./Repository";
-import {EntityOptions} from "..";
+import {DBDriver, Repository} from "./Repository";
+import {DatabaseDriver, EntityOptions} from "..";
 import {Table} from "../Model/Table";
+import {DataBase} from "../Model/DataBase";
 
 export type EntityType = { new(...args: any[]): { [EntityFieldSymbol]?: Repository<any> } };
 
 export const EntityFieldSymbol = Symbol('EntityManager');
+
 export class EntityManager<T> {
     static classes: EntityType[] = [];
 
@@ -17,9 +19,11 @@ export class EntityManager<T> {
 
             constructor[EntityFieldSymbol] = RepoInstance;
 
-            RepoInstance.table = new Table({name: settings.tabel,columns: RepoInstance.columns} as Partial<Table>);
+            RepoInstance.table = new Table({name: settings.tabel, columns: RepoInstance.columns} as Partial<Table>);
 
             EntityManager.classes.push(constructor);
+
+            (settings.databaseDriver || DataBase.drivers[0]) && RepoInstance[DBDriver].push(settings.databaseDriver || DataBase.drivers[0]);
         }
     }
 
@@ -31,5 +35,4 @@ export class EntityManager<T> {
 
         return EntityManager.classes[index][EntityFieldSymbol];
     }
-
 }

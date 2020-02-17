@@ -1,10 +1,11 @@
-import {EntityManager} from "..";
+import {DBDrivable, EntityManager} from "..";
 import {Class} from "..";
 import {Repository} from "../Managers/Repository";
 
 export type EntityOptions = {
     repository?: Repository<any> | Class,
     tabel?: string,
+    databaseDriver?: DBDrivable,
 };
 
 const defasultSettings: EntityOptions = {
@@ -20,7 +21,7 @@ export function Entity(settings: EntityOptions = {}) {
      */
     return function <T extends { new(...args: any[]): {} }>(constructor: T) {
         if (!config.tabel) {
-            config.tabel = constructor.name.replace(/(?<!^)[A-Z]/g, key => '_'+key.toLowerCase()).toLowerCase();
+            config.tabel = constructor.name.replace(/(?<!^)[A-Z]/g, key => '_' + key.toLowerCase()).toLowerCase();
         }
         EntityManager.register(constructor, config)
     }

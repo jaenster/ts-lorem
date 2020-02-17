@@ -1,10 +1,11 @@
 import {EntityFieldSymbol, EntityManager, EntityType} from "./EntityManager";
-import {ColumnsSymbol} from "..";
+import {ColumnsSymbol, DBDrivable} from "..";
 import {Column} from "../Model/Column";
 import {Table} from "../Model/Table";
 
 export const isNew = Symbol('isNew');
 export const dirty = Symbol('dirty');
+export const DBDriver = Symbol('db');
 
 export class Repository<T> {
     private columns: Column[] = [];
@@ -14,6 +15,7 @@ export class Repository<T> {
     private cache: { model: T, lastUsed: number }[] = [];
     private interval;
     public table: Table;
+    public [DBDriver]: DBDrivable[] = [];
 
     constructor(constructor: EntityType) {
         this.model = constructor;
@@ -73,6 +75,10 @@ export class Repository<T> {
             };
             this.writeColumnProxies(model);
         }
+    }
+
+    async flush() {
+        return await Promise.all(this[DBDriver].map(async driver => await driver.flush(this)));
     }
 
     private writeColumnProxies(model: T) {
