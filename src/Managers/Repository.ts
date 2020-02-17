@@ -20,9 +20,11 @@ export class Repository<T> {
     constructor(constructor: EntityType) {
         //@ts-ignore <-- Its a constructor that results in T
         this.model = constructor;
+
         this.columns = constructor[ColumnsSymbol];
-        this.idColumn = this.columns.find(el => el.id);
         delete constructor[ColumnsSymbol];
+        this.idColumn = this.columns.find(el => el.id);
+
         this.interval = setInterval(this.cacheHandler.bind(this), 3 * 1000);
     }
 
@@ -80,14 +82,14 @@ export class Repository<T> {
         await Promise.all(this.table.connections
             .filter(({model}) => model === modelT) // Filter, only relations to M
             .map(async ({column}) => {
-                const instancesOfColumn = await this.findByColumn(column);
+                const instancesOfColumn = await this.findByColumn(column,modelT);
                 collection.push(...instancesOfColumn);
             }));
 
         return collection;
     }
 
-    findByColumn(column: Column): T[] {
+    findByColumn(column: Column, model: {[column.name] : any}): T[] {
         //ToDo; generate query.
         return [];
     }
