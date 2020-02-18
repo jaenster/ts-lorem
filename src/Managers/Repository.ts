@@ -1,5 +1,5 @@
 import {EntityFieldSymbol, EntityManager, EntityType} from "./EntityManager";
-import {ColumnsSymbol, DBDrivable} from "..";
+import {Class, ColumnsSymbol, DBDrivable} from "..";
 import {Column} from "../Model/Column";
 import {Table} from "../Model/Table";
 
@@ -78,20 +78,17 @@ export class Repository<T> {
     async findByModel(modelT: object): Promise<T[]> {
 
         const collection: T[] = [];
+        const driver: DBDrivable = this[DBDriver][0];
+        const repo: Repository<typeof modelT> = modelT.constructor[EntityFieldSymbol];
 
         await Promise.all(this.table.connections
-            .filter(({model}) => model === modelT) // Filter, only relations to M
+            .filter(({model}) => model instanceof modelT.constructor) // Filter, only relations to M
             .map(async ({column}) => {
-                const instancesOfColumn = await this.findByColumn(column,modelT);
+                const instancesOfColumn = await driver.findByColumn<T>(this, {[column.name]: modelT[repo.idColumn.name]} as Partial<T>);
                 collection.push(...instancesOfColumn);
             }));
 
         return collection;
-    }
-
-    findByColumn(column: Column, model: {[column.name] : any}): T[] {
-        //ToDo; generate query.
-        return [];
     }
 
     persist(model: T) {

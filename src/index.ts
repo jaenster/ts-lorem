@@ -4,7 +4,5 @@ export * from './Annotation/Validator';
 export * from './Annotation/DatabaseDriver';
 export * from './Managers/EntityManager';
 export * from './Managers/Repository';
-export * from './Model/Collection';
-export * from './Model/ArrayImposer';
 export * from './Model/DBDrivable';
 export * from './Types/Class';
